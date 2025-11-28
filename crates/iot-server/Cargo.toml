@@ -17,5 +17,6 @@ uuid = { workspace = true }
 time = { workspace = true }
 log = { workspace = true }
 
-axum = "0.8.7"
+axum = { version = "0.8.7", features = ["ws"] }
 tower-http = { version = "0.6.7", features = ["cors"] }
+tokio-stream = { version = "0.1.17", features = ["sync"] }

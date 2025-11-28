@@ -1,0 +1,7 @@
+.git/
+target/
+crates/**/target
+!target/release/referee
+infra/
+infra/**/*
+prod-env.env

@@ -1,0 +1,31 @@
+services:
+  http:
+    image: iot-cli
+    restart: always
+    command: --host 0.0.0.0:8080
+    environment:
+      DATABASE_URL: mysql://root@db/iot
+      RUST_LOG: info
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "POST", "http://localhost:8080/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+  listener:
+    image: iot-cli
+    restart: always
+    command: --broker mqtt://158.23.162.90
+    environment:
+      DATABASE_URL: mysql://root@db/iot
+      RUST_LOG: info
+  db:
+    image: mysql:9.5.0
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: "iot"
+    volumes:
+      - ./mysql-database:/var/lib/mysql

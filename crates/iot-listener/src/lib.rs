@@ -7,8 +7,9 @@ use mqtt_async_client::{
     client::{ClientBuilder, QoS, Subscribe, SubscribeTopic},
     Error,
 };
+use tokio::sync::broadcast::Sender;
 
-use iot_entities::SensorService;
+use iot_entities::{SensorEntry, SensorService};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -17,15 +18,14 @@ where
     S: SensorService,
 {
     svc: S,
-}
-
-impl<S: SensorService> From<S> for IotListener<S> {
-    fn from(svc: S) -> Self {
-        Self { svc }
-    }
+    tx: Sender<SensorEntry>,
 }
 
 impl<S: SensorService + Send + Sync + 'static> IotListener<S> {
+    pub fn new(svc: S, tx: Sender<SensorEntry>) -> Self {
+        Self { svc, tx }
+    }
+
     async fn save_entry(&self, id: String, data: String) {
         let uuid = match Uuid::from_str(&id) {
             Ok(ok) => ok,
@@ -43,8 +43,15 @@ impl<S: SensorService + Send + Sync + 'static> IotListener<S> {
             }
         };
 
-        if let Err(why) = self.svc.save_entry(uuid, ppm).await {
-            error!("could not save entry record {}", why);
+        match self.svc.save_entry(uuid, ppm).await {
+            Ok(entry) => {
+                if let Err(err) = self.tx.send(entry) {
+                    error!("Could not broadcast entry: {}", err);
+                }
+            }
+            Err(why) => {
+                error!("could not save entry record {}", why);
+            }
         }
     }
 

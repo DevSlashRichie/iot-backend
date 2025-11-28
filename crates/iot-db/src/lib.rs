@@ -1,6 +1,7 @@
 mod errors;
 
 use iot_entities::{Sensor, SensorEntry, SensorService};
+use log::info;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -107,6 +108,10 @@ pub async fn connect_database(database_url: &str) -> Result<Pool<MySql>, DbError
         .max_connections(5)
         .connect(database_url)
         .await?;
+
+    info!("doing migrations");
+    let migrator = sqlx::migrate!("./migrations");
+    migrator.run(&pool).await?;
 
     Ok(pool)
 }

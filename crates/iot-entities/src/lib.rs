@@ -8,7 +8,7 @@ pub struct Sensor {
     pub created_at: i64,
 }
 
-#[derive(Serialize, sqlx::FromRow, Debug)]
+#[derive(Serialize, sqlx::FromRow, Debug, Clone)]
 pub struct SensorEntry {
     pub id: Uuid,
     pub sensor_id: Uuid,

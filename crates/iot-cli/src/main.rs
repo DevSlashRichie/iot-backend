@@ -1,7 +1,7 @@
+use std::future::pending;
+
 use clap::Parser;
 use iot_db::SensorModel;
-use iot_listener::IotListener;
-use tokio::try_join;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -34,23 +34,33 @@ async fn main() {
 
     let sensor_model: SensorModel = db.into();
 
-    let mqtt_future = async {
-        if let Some(broker_host) = args.broker.clone() {
-            let listener = IotListener::from(sensor_model.clone());
-            listener.run_listener(broker_host).await?;
-        }
-        Ok::<(), Box<dyn std::error::Error>>(())
-    };
+    // Create a broadcast channel for sensor entries
+    // We rely on type inference or explicit type if needed, but since both consumers expect Sender<SensorEntry>, it should infer.
+    let (tx, _rx) = tokio::sync::broadcast::channel(100);
 
-    let http_future = async {
-        if let Some(host) = args.host.clone() {
-            iot_server::init_http_server(host, sensor_model.clone()).await?;
-        }
-        Ok::<(), Box<dyn std::error::Error>>(())
-    };
-
-    // Run in parallel
-    if let Err(e) = try_join!(mqtt_future, http_future) {
-        eprintln!("Task failed: {}", e);
+    // Spawn MQTT task
+    if let Some(broker_host) = args.broker.clone() {
+        let model = sensor_model.clone();
+        let tx = tx.clone();
+        tokio::spawn(async move {
+            let listener = iot_listener::IotListener::new(model, tx);
+            if let Err(why) = listener.run_listener(broker_host).await {
+                println!("MQTT failed: {}", why);
+            }
+        });
     }
+
+    // Spawn HTTP task
+    if let Some(host) = args.host.clone() {
+        let model = sensor_model.clone();
+        let tx = tx.clone();
+        tokio::spawn(async move {
+            if let Err(why) = iot_server::init_http_server(host, model, tx).await {
+                println!("HTTP failed: {}", why);
+            }
+        });
+    }
+
+    // Keep the main alive forever.
+    pending::<()>().await;
 }
