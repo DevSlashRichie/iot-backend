@@ -1,0 +1,17 @@
+[package]
+name = "iot-listener"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+tokio.workspace = true
+iot-entities.workspace = true
+uuid.workspace = true
+log.workspace = true
+pretty_env_logger.workspace = true
+
+mqtt-async-client = "0.3.1"

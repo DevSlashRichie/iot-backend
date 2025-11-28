@@ -1,0 +1,15 @@
+[package]
+name = "iot-db"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+iot-entities.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+time.workspace = true
+tokio.workspace = true
+sqlx.workspace = true

@@ -1,0 +1,13 @@
+[package]
+name = "iot-entities"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sqlx = { workspace = true, features= ["derive"] }
+uuid = { workspace = true, features = ["v7", "fast-rng", "serde"] }

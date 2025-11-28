@@ -1,0 +1,20 @@
+[package]
+name = "iot-cli"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+readme = { workspace = true }
+
+[dependencies]
+iot-server = { workspace = true }
+iot-listener = { workspace = true }
+iot-db = { workspace = true }
+pretty_env_logger = { workspace = true }
+
+tokio = { workspace = true, features = ["full"] }
+
+clap = { version = "4.5.53", features = ["derive", "env"] }
+mqtt-async-client = "0.3.1"
+thiserror = "2.0.17"
+dotenvy = "0.15"
