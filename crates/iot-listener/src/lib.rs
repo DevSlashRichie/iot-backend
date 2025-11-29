@@ -4,8 +4,8 @@ use std::str::FromStr;
 
 use log::{error, info};
 use mqtt_async_client::{
-    client::{ClientBuilder, QoS, Subscribe, SubscribeTopic},
     Error,
+    client::{ClientBuilder, QoS, Subscribe, SubscribeTopic},
 };
 use tokio::sync::broadcast::Sender;
 
@@ -134,3 +134,4 @@ impl<S: SensorService + Send + Sync + 'static> IotListener<S> {
         Ok(())
     }
 }
+
