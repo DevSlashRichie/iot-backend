@@ -1,6 +1,9 @@
 use axum::{
-    extract::{Path, State},
-    response::{sse::Event, Json, Sse},
+    extract::{
+        ws::{Message, WebSocket, WebSocketUpgrade},
+        Path, State,
+    },
+    response::{sse::Event, IntoResponse, Json, Sse},
     routing::get,
     Error, Router,
 };
@@ -60,6 +63,39 @@ where
     Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::default())
 }
 
+async fn ws_handler<S>(
+    ws: WebSocketUpgrade,
+    Path(id): Path<Uuid>,
+    State(state): State<AppState<S>>,
+) -> impl IntoResponse
+where
+    S: SensorService + Clone + Sync + Send + 'static,
+{
+    ws.on_upgrade(move |socket| handle_socket(socket, id, state))
+}
+
+async fn handle_socket<S>(mut socket: WebSocket, id: Uuid, state: AppState<S>) {
+    let mut rx = state.tx.subscribe();
+
+    loop {
+        match rx.recv().await {
+            Ok(msg) => {
+                if msg.sensor_id == id {
+                    let payload = match serde_json::to_string(&msg) {
+                        Ok(p) => p,
+                        Err(_) => continue,
+                    };
+                    if socket.send(Message::Text(payload.into())).await.is_err() {
+                        break;
+                    }
+                }
+            }
+            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+            Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+        }
+    }
+}
+
 pub fn sensor_routes<S>() -> Router<AppState<S>>
 where
     S: SensorService + Send + Sync + Clone + 'static,
@@ -69,4 +105,5 @@ where
         .route("/{id}", get(get_sensor::<S>))
         .route("/{id}/history", get(get_sensor_history::<S>))
         .route("/{id}/live", get(sse_handler::<S>))
+        .route("/{id}/ws", get(ws_handler::<S>))
 }
