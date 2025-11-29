@@ -1,10 +1,10 @@
 services:
-  http:
+  iot-app:
     image: iot-cli:latest
     restart: always
-    command: --host 0.0.0.0:8080
+    command: --host 0.0.0.0:8080 --broker mqtt://158.23.162.90
     environment:
-      DATABASE_URL: mysql://root@db/iot
+      DATABASE_URL: mysql://root@host.docker.internal/iot
       RUST_LOG: info
     ports:
       - 8080:8080
@@ -14,35 +14,3 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
-    depends_on:
-      - db
-
-  listener:
-    image: iot-cli:latest
-    restart: always
-    command: --broker mqtt://mosquitto
-    environment:
-      DATABASE_URL: mysql://root@db/iot
-      RUST_LOG: info
-    depends_on:
-      - db
-      - mosquitto
-
-  db:
-    image: mysql:9.5.0
-    restart: always
-    environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
-      MYSQL_DATABASE: "iot"
-    volumes:
-      - ./mysql-database:/var/lib/mysql
-
-  mosquitto:
-    image: eclipse-mosquitto:2
-    restart: always
-    ports:
-      - "1883:1883"
-    volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - ./data:/mosquitto/data
-      - ./log:/mosquitto/log

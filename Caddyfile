@@ -1,0 +1,14 @@
+:80 {
+    reverse_proxy http:8080 {
+        flush_interval -1
+        header_up Cache-Control "no-cache"
+        header_up Connection "keep-alive"
+
+        transport http {
+            read_buffer     0
+            read_timeout    600s
+            write_timeout   600s
+        }
+    }
+}
+
