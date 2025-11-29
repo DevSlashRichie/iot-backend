@@ -13,6 +13,8 @@ RUN cargo build --release
 FROM public.ecr.aws/docker/library/debian:bookworm-slim
 WORKDIR /usr/app
 
+LABEL org.opencontainers.image.source="https://github.com/DevSlashRichie/iot-backend"
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl
 
